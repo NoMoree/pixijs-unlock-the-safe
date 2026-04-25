@@ -11,7 +11,6 @@ export class GamePlayState extends State {
     private gameContainer!: Container;
     private door!: SafeDoor;
     private timerText!: TimerText;
-    private treasure!: Sprite;
     private leftZone!: Graphics;
     private rightZone!: Graphics;
     private background!: Sprite;
@@ -34,9 +33,8 @@ export class GamePlayState extends State {
     enterState(): void {
         super.enterState();
 
-        if (GAME.containers.door && GAME.containers.treasure) {
+        if (GAME.containers.door) {
             this.door = GAME.containers.door;
-            this.treasure = GAME.containers.treasure;
             this.timerText = new TimerText();
             this.positionTimerText();
             GAME.app.stage.addChild(this.timerText);
@@ -65,21 +63,11 @@ export class GamePlayState extends State {
         this.background.height = REF_HEIGHT;
         this.gameContainer.addChild(this.background);
 
-        // Treasure -behind door
-        const treasureTex = Assets.get("treasure") as Texture;
-        this.treasure = new Sprite(treasureTex);
-        this.treasure.anchor.set(0.5);
-        this.treasure.alpha = 0;
-        this.positionTreasure();
-        this.gameContainer.addChild(this.treasure);
-        GAME.containers.treasure = this.treasure;
-
         // Door
         const closedTex = Assets.get("door-closed") as Texture;
         const openTex = Assets.get("door-open") as Texture;
-        const openingTex = Assets.get("door-opening") as Texture;
         const handleTex = Assets.get("door-handle") as Texture;
-        this.door = new SafeDoor(closedTex, openTex, openingTex, handleTex);
+        this.door = new SafeDoor(closedTex, openTex, handleTex);
         this.positionDoor();
         this.gameContainer.addChild(this.door);
         GAME.containers.door = this.door;
@@ -106,11 +94,6 @@ export class GamePlayState extends State {
 
     private positionDoor() {
         this.door.setPosition(REF_WIDTH / 2, REF_HEIGHT / 2);
-    }
-
-    private positionTreasure() {
-        this.treasure.x = REF_WIDTH / 2;
-        this.treasure.y = REF_HEIGHT / 2;
     }
 
     private positionTimerText() {

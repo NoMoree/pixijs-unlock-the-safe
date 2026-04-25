@@ -1,13 +1,10 @@
 import { Block } from "../../Blocks";
-import { Sprite, Container, Graphics } from "pixi.js";
 import gsap from "gsap";
 
 export class AddTreasureShineEffect extends Block {
-    private treasure: Sprite;
 
-    constructor(name: string, treasure: Sprite) {
+    constructor(name: string) {
         super(name);
-        this.treasure = treasure;
     }
 
     async start() {

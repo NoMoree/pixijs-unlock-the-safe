@@ -15,18 +15,16 @@ export class ShowTreasureState extends State {
 
     setupBlocks(): void {
         const door = GAME.containers.door;
-        const treasure = GAME.containers.treasure;
-        if (!door || !treasure) {
-            console.error("Door or treasure missing – cannot run win sequence");
+        if (!door) {
+            console.error("Door missing  cannot run win sequence");
             this.exitState();
             return;
         }
 
         this.blocks = [
-            new OpenDoorBlock("Open door", door, treasure),
-            new AddTreasureShineEffect("Show treasure", treasure),
-            // new ToggleTreasureBlock("Show treasure", treasure, false),
-            new ResetGameBlock("Reset game", door, treasure),
+            new OpenDoorBlock("Open door", door),
+            new AddTreasureShineEffect("Show treasure"),
+            new ResetGameBlock("Reset game", door),
         ];
     }
 

@@ -1,4 +1,4 @@
-import { Application, Sprite } from "pixi.js";
+import { Application } from "pixi.js";
 import { Models } from "./game/models/Models";
 import { XContainer } from "./pixi/XContainer";
 import { GameState } from "./structure/states/StateDefinitions";
@@ -33,7 +33,6 @@ type GAME_Type = {
     containers: {
         mainGameContainer: XContainer | undefined;
         door: SafeDoor | undefined;
-        treasure: Sprite | undefined;
     };
     sound: any;
     app: Application;
@@ -56,7 +55,6 @@ export const GAME: GAME_Type = {
     containers: {
         mainGameContainer: undefined,
         door: undefined,
-        treasure: undefined,
     },
     sound: undefined,
     app: new Application(),

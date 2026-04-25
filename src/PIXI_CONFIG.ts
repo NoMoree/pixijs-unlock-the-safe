@@ -14,12 +14,6 @@ export class PIXI_CONFIG {
                 anchorX: 0,
                 anchorY: 0.5,
                 fontSize: 20,
-            },
-            treasure: {
-                x: () => window.innerWidth / 2,
-                y: () => window.innerHeight / 2,
-                anchorX: 0.5,
-                anchorY: 0.5,
             }
         };
     }

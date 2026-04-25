@@ -43,21 +43,21 @@ export class PIXI_CONFIG {
                     scale: 1,
                     alpha: 1,
                 },
-                closedDoorMinWidthPercent: 0.2,
-                openDoorStartWidthPercent: 0.2,
+                closedDoorMinWidthPercent: 0.25,
+                openDoorStartWidthPercent: 0.25,
                 openDoorTargetWidthPercent: 0.75,
 
                 handleSpinDegrees: 60,
-                handleSpinDuration: 0.2,
+                handleSpinDuration: 0.3,
                 furiousSpinRepeats: 3,
             },
 
             timer: {
-                posXPercent: 0.2885,
-                posYPercent: 0.464,
+                posXPercent: 0.2945,
+                posYPercent: 0.4643,
                 anchorX: 0,
                 anchorY: 0.5,
-                fontSize: 20,
+                fontSize: 25,
             },
 
             shine: {

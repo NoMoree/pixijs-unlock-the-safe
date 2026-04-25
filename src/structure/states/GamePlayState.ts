@@ -35,6 +35,7 @@ export class GamePlayState extends State {
 
         if (GAME.containers.door) {
             this.door = GAME.containers.door;
+            this.timerText.destroy();
             this.timerText = new TimerText();
             this.positionTimerText();
             GAME.app.stage.addChild(this.timerText);
@@ -107,7 +108,7 @@ export class GamePlayState extends State {
         this.timerText.x = bgLeft + bgWidth * timerCfg.posXPercent;
         this.timerText.y = bgTop + bgHeight * timerCfg.posYPercent;
         this.timerText.anchor.set(timerCfg.anchorX, timerCfg.anchorY);
-        this.timerText.style.fontSize = timerCfg.fontSize;
+        this.timerText.style.fontSize = Math.max(5, timerCfg.fontSize * scale);
     }
 
     private setupInput() {
@@ -204,7 +205,6 @@ export class GamePlayState extends State {
         window.removeEventListener("resize", this.onResize);
         if (this.leftZone) this.leftZone.destroy();
         if (this.rightZone) this.rightZone.destroy();
-        if (this.timerText) this.timerText.destroy();
     }
 
     removeEvents(): void {

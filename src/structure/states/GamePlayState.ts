@@ -5,7 +5,7 @@ import { SafeDoor } from "../../prefabs/SafeDoor";
 import { TimerText } from "../../prefabs/TimerText";
 import { CombinationGenerator } from "../../utils/CombinationGenerator";
 import { GameState } from "./StateDefinitions";
-import { getGameScale, REF_HEIGHT, REF_WIDTH } from "../../utils/scaleHelper";
+import { getGameScale } from "../../utils/scaleHelper";
 
 export class GamePlayState extends State {
     private gameContainer!: Container;
@@ -52,6 +52,7 @@ export class GamePlayState extends State {
 
     private createScene() {
         GAME.app.stage.removeChildren();
+        const ref = this.getRefResolution();
 
         this.gameContainer = new Container();
         GAME.app.stage.addChild(this.gameContainer);
@@ -59,8 +60,8 @@ export class GamePlayState extends State {
         // Background
         const bgTex = Assets.get("background") as Texture;
         this.background = new Sprite(bgTex);
-        this.background.width = REF_WIDTH;
-        this.background.height = REF_HEIGHT;
+        this.background.width = ref.width;
+        this.background.height = ref.height;
         this.gameContainer.addChild(this.background);
 
         // Door
@@ -82,7 +83,8 @@ export class GamePlayState extends State {
     }
 
     private updateGameContainerTransform() {
-        const { scale, x, y } = getGameScale();
+        const ref = this.getRefResolution();
+        const { scale, x, y } = getGameScale(ref.width, ref.height);
         this.gameContainer.scale.set(scale);
         this.gameContainer.x = x;
         this.gameContainer.y = y;
@@ -90,18 +92,18 @@ export class GamePlayState extends State {
 
 
     private positionDoor() {
-        this.door.setPosition(REF_WIDTH / 2, REF_HEIGHT / 2);
+        const ref = this.getRefResolution();
+        this.door.setPosition(ref.width / 2, ref.height / 2);
     }
 
     private positionTimerText() {
         const timerCfg = GAME.config.getConfig().timer;
-
-        const { scale, x, y } = getGameScale();
+        const ref = this.getRefResolution();
+        const { scale, x, y } = getGameScale(ref.width, ref.height);
         const bgLeft = x;
         const bgTop = y;
-        const bgWidth = REF_WIDTH * scale;
-        const bgHeight = REF_HEIGHT * scale;
-
+        const bgWidth = ref.width * scale;
+        const bgHeight = ref.height * scale;
         this.timerText.x = bgLeft + bgWidth * timerCfg.posXPercent;
         this.timerText.y = bgTop + bgHeight * timerCfg.posYPercent;
         this.timerText.anchor.set(timerCfg.anchorX, timerCfg.anchorY);
@@ -127,6 +129,10 @@ export class GamePlayState extends State {
         this.rightZone.cursor = "pointer";
         this.rightZone.on("pointerdown", () => this.handleTurn("CW"));
         GAME.app.stage.addChild(this.rightZone);
+    }
+
+    private getRefResolution() {
+        return GAME.config.getConfig().referenceResolution;
     }
 
     private async handleTurn(direction: "CW" | "CCW") {

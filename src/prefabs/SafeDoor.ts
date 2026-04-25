@@ -270,4 +270,8 @@ export class SafeDoor extends Container {
 
         this.isOpen = false;
     }
+
+    public getOriginalWidth(): number {
+        return this.originalWidth;
+    }
 }

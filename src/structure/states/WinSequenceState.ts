@@ -3,11 +3,11 @@ import { GAME } from "../../GAME";
 import { GameState } from "./StateDefinitions";
 import { OpenDoorBlock } from "../blocks/success/OpenDoorBlock";
 import { ResetGameBlock } from "../blocks/success/ResetGameBlock";
-import { AddTreasureShineEffect } from "../blocks/success/AddTreasureShineEffect";
+import { AddTreasureShineEffectBlock } from "../blocks/success/AddTreasureShineEffectBlock";
 
-export class ShowTreasureState extends State {
+export class WinSequenceState extends State {
     setupEvents(): void {
-        console.log("🏆 ShowTreasureState - playing win sequence");
+        console.log("WinSequenceState - playing win sequence");
     }
 
     modelChanges(): void {
@@ -20,10 +20,9 @@ export class ShowTreasureState extends State {
             this.exitState();
             return;
         }
-
         this.blocks = [
             new OpenDoorBlock("Open door", door),
-            new AddTreasureShineEffect("Show treasure"),
+            new AddTreasureShineEffectBlock("Add treasure shine effect"),
             new ResetGameBlock("Reset game", door),
         ];
     }

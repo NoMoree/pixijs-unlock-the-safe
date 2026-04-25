@@ -170,7 +170,7 @@ export class GamePlayState extends State {
 
                 this.cleanupInputAndTicker();
 
-                GAME.states[GameState.SHOW_TREASURE].enterState();
+                GAME.states[GameState.WIN_SEQUENCE].enterState();
             }
         }
     }

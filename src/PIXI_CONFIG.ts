@@ -61,8 +61,8 @@ export class PIXI_CONFIG {
             },
 
             shine: {
-                count: 8,
-                radius: 100,
+                count: 35,
+                radius: 300,
                 minDuration: 0.6,
                 maxDuration: 1.2,
             },

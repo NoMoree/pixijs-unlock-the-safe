@@ -6,7 +6,7 @@ import { SetupState } from "./structure/states/SetupState";
 import { GamePlayState } from "./structure/states/GamePlayState";
 import { CustomEvent } from "./events/CustomEvent";
 import { PIXI_CONFIG } from "./PIXI_CONFIG";
-import { ShowTreasureState } from "./structure/states/ShowTreasureState";
+import { WinSequenceState } from "./structure/states/WinSequenceState";
 import { SafeDoor } from "./prefabs/SafeDoor";
 
 export type GameConfig = {
@@ -23,7 +23,7 @@ type GAME_Type = {
     states: {
         [GameState.SETUP]: SetupState;
         [GameState.GAME_PLAY]: GamePlayState;
-        [GameState.SHOW_TREASURE]: ShowTreasureState;
+        [GameState.WIN_SEQUENCE]: WinSequenceState;
     };
     events: {
         blockComplete: CustomEvent<void>;
@@ -45,7 +45,7 @@ export const GAME: GAME_Type = {
     states: {
         [GameState.SETUP]: new SetupState(),
         [GameState.GAME_PLAY]: new GamePlayState(),
-        [GameState.SHOW_TREASURE]: new ShowTreasureState()
+        [GameState.WIN_SEQUENCE]: new WinSequenceState()
     },
     events: {
         blockComplete: new CustomEvent<void>("block-complete"),

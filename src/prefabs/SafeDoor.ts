@@ -12,6 +12,7 @@ export class SafeDoor extends Container {
     private handleSprite: Sprite;
     private handleShadow: Sprite;
     private isOpen = false;
+    private isAnimatingDoor = false;
     private originalWidth: number;
     private originalRightEdge: number;
     private currentScale: number = 1;
@@ -83,7 +84,14 @@ export class SafeDoor extends Container {
         const shadowOffsetY = this.config.handleShadow.offset.y;
         this.handleShadow.x = this.handleGroup.x + shadowOffsetX;
         this.handleShadow.y = this.handleGroup.y + shadowOffsetY;
-        this.handleShadow.rotation = this.handleGroup.rotation;
+        if (this.isAnimatingDoor) {
+            this.handleShadow.scale.x = this.handleGroup.scale.x * (this.config.handleShadow.scale ?? 1);
+            this.handleShadow.scale.y = this.config.handleShadow.scale ?? 1;
+            this.handleShadow.rotation = 0;
+        }
+        else {
+            this.handleShadow.rotation = this.handleGroup.rotation;
+        }
     }
 
     public setScale(scale: number) {
@@ -157,6 +165,7 @@ export class SafeDoor extends Container {
     async openDoor() {
         if (this.isOpen) return;
         this.isOpen = true;
+        this.isAnimatingDoor = true;
         this.resetHandleRotation();
 
         // Fixed right edge of the closed door
@@ -211,10 +220,12 @@ export class SafeDoor extends Container {
                 this.openShadow.x = openStartX + (this.config.openShadow.offset?.x ?? 0);
             }
         });
+        this.isAnimatingDoor = false;
     }
 
     async closeDoor() {
         if (!this.isOpen) return;
+        this.isAnimatingDoor = true;
 
         const fixedLeftEdge = this.openSprite.x;
         const endShrinkWidth = this.originalWidth * this.config.openDoorStartWidthPercent;
@@ -269,6 +280,7 @@ export class SafeDoor extends Container {
         });
 
         this.isOpen = false;
+        this.isAnimatingDoor = false;
     }
 
     public getOriginalWidth(): number {

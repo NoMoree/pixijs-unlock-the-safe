@@ -6,14 +6,9 @@
 1.
 1.use debug.ts when using console.log
 1.
-1.resize timer ```private updateTimerTextScale() {
-    //     const scale = getScaleFactor();
-    //     const baseSize = 36;
-    //     const newSize = Math.max(18, baseSize * scale);
-    //     this.timerText.style.fontSize = newSize;
-    // }```
-1.              // TODO: stop timer but don't hide it
-1.
+1.TODO: resize timer, change font size based on scale
+1.TODO: stop timer but don't hide it
+1.TODO: take `REF_HEIGHT` and `REF_WIDTH` values from `PIXI_CONFIG`
 1.
 1.move createScene into blocks?
 1.fix CombinationGenerator to 3,9

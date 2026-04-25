@@ -18,10 +18,9 @@ export class AssetLoad extends Block {
         Assets.addBundle('all-assets', {
             'background': `${baseUrl}background.png`,
             'door-closed': `${baseUrl}door-closed.png`,
-            'door-opening': `${baseUrl}door-opening.png`,
             'door-open': `${baseUrl}door-open.png`,
             'door-handle': `${baseUrl}door-handle.png`,
-            'treasure': `${baseUrl}treasure.png`,
+            'shine': `${baseUrl}shine.png`,
         });
 
         await Assets.loadBundle('all-assets');

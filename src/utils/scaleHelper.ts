@@ -1,5 +1,5 @@
-export const REF_WIDTH = 1016;
-export const REF_HEIGHT = 496;
+export const REF_WIDTH = 2400;
+export const REF_HEIGHT = 1108;
 
 export function getGameScale(): { scale: number; x: number; y: number } {
     const scaleX = window.innerWidth / REF_WIDTH;

@@ -1,62 +1,80 @@
-import { Container, Sprite, Texture } from "pixi.js";
+import { Container, Sprite, Texture, Assets } from "pixi.js";
 import gsap from "gsap";
 
 export class SafeDoor extends Container {
     private closedSprite: Sprite;
     private openSprite: Sprite;
+    private openShadow: Sprite;
     private handleGroup: Container;
     private handleSprite: Sprite;
     private handleShadow: Sprite;
     private isOpen = false;
     private originalWidth: number;
     private currentScale: number = 1;
-    private openStartPosition: number = 0;
     private centerX: number = 0;
     private centerY: number = 0;
 
-    constructor(closedTex: Texture, openTex: Texture, handleTex: Texture) {
+    private readonly SHADOW_OFFSET_X = 50;
+    private readonly SHADOW_OFFSET_Y = 25;
+
+    private readonly closedDoorMinWidthPercent = 0.5;
+    private readonly openDoorStartWidthPercent = 0.2;
+    private readonly openDoorTargetWidthPercent = 0.75;
+
+
+    constructor() {
         super();
 
-        // Closed sprite (left-anchored)
+        const closedTex = Assets.get("door-closed") as Texture;
+        const openTex = Assets.get("door-open") as Texture;
+        const openShadowTex = Assets.get("door-open-shadow") as Texture;
+        const handleTex = Assets.get("door-handle") as Texture;
+        const handleShadowTex = Assets.get("door-handle-shadow") as Texture;
+
         this.closedSprite = new Sprite(closedTex);
         this.closedSprite.anchor.set(0, 0.5);
         this.addChild(this.closedSprite);
 
-        // Open sprite (left-anchored)
+        this.openShadow = new Sprite(openShadowTex);
+        this.openShadow.anchor.set(0, 0.5);
+        this.openShadow.alpha = 1;
+        this.openShadow.visible = false;
+        this.addChild(this.openShadow);
+
         this.openSprite = new Sprite(openTex);
         this.openSprite.anchor.set(0, 0.5);
         this.openSprite.visible = false;
         this.addChild(this.openSprite);
 
-        // Handle group
+
         this.handleGroup = new Container();
         this.handleSprite = new Sprite(handleTex);
         this.handleSprite.anchor.set(0.5);
-        this.handleShadow = new Sprite(handleTex);
+        this.handleShadow = new Sprite(handleShadowTex);
         this.handleShadow.anchor.set(0.5);
-        this.handleShadow.tint = 0x000000;
-        this.handleShadow.alpha = 0.5;
         this.handleShadow.position.set(8, 8);
+        this.handleShadow.alpha = 1;
         this.handleGroup.addChild(this.handleShadow);
         this.handleGroup.addChild(this.handleSprite);
         this.addChild(this.handleGroup);
 
         this.originalWidth = this.closedSprite.width;
+        this.updateHandleForClosedDoor();
+    }
 
-        this.setScale(1);
-        this.handleGroup.x = this.originalWidth / 2;
-
-        this.handleGroup.x = this.originalWidth / 2;
+    private updateHandleForClosedDoor() {
+        const w = this.closedSprite.width;
+        const centerX = this.closedSprite.x + w / 2;
+        this.handleGroup.x = centerX;
+        this.handleGroup.scale.x = w / this.originalWidth;
+        this.handleGroup.scale.y = 1;
     }
 
     public setScale(scale: number) {
         this.currentScale = scale;
         this.scale.set(scale, scale);
-
-        this.handleGroup.x = (this.originalWidth * scale) / 2;
     }
 
-    // Update setPosition to use the scaled width
     public setPosition(centerX: number, centerY: number) {
         this.centerX = centerX;
         this.centerY = centerY;
@@ -67,7 +85,7 @@ export class SafeDoor extends Container {
 
     public updatePosition() {
         if (this.centerX && this.centerY) {
-            this.x = this.centerX - this.originalWidth / 2;
+            this.x = this.centerX - (this.originalWidth * this.currentScale) / 2;
             this.y = this.centerY;
         }
     }
@@ -96,45 +114,69 @@ export class SafeDoor extends Container {
         await tl;
     }
 
+    private resetHandleRotation() {
+        this.handleGroup.rotation = 0;
+    }
+
     async openDoor() {
         if (this.isOpen) return;
         this.isOpen = true;
 
-        // TODO: keep handle groped to closed door
-        this.handleGroup.visible = false;
+        this.resetHandleRotation();
 
-        // Step 1: Replace closed sprite with opening sprite (full width)
-        this.closedSprite.visible = true;
-
+        // Fixed right edge of the closed door
         const fixedRightEdge = this.closedSprite.x + this.closedSprite.width;
+        const minClosedWidth = this.originalWidth * this.closedDoorMinWidthPercent;
 
-        // Step 2: Shrink opening sprite to 0 (right fixed, left side shrinks)
         await gsap.to(this.closedSprite, {
             duration: 0.5,
-            width: 0,
+            width: minClosedWidth,
             ease: "power2.in",
             onUpdate: () => {
                 const w = this.closedSprite.width;
                 this.closedSprite.x = fixedRightEdge - w;
+
+                // Update handle to follow door's center and scale
+                this.handleGroup.x = this.closedSprite.x + w / 2;
+                this.handleGroup.scale.x = w / this.originalWidth;
+            },
+            onComplete: () => {
+                this.closedSprite.width = minClosedWidth;
+                this.closedSprite.x = fixedRightEdge - minClosedWidth;
+                this.handleGroup.x = this.closedSprite.x + minClosedWidth / 2;
+                this.handleGroup.scale.x = minClosedWidth / this.originalWidth;
+
+                this.closedSprite.visible = false;
+                this.handleGroup.visible = false;
             }
         });
 
-        this.openStartPosition = fixedRightEdge;
+        // Prepare open door at the same right edge
+        const startWidth = this.originalWidth * this.openDoorStartWidthPercent;
+        const targetWidth = this.originalWidth * this.openDoorTargetWidthPercent;
+        const openStartX = fixedRightEdge;
 
-        // Step 3: Hide opening sprite, prepare open sprite
-        this.closedSprite.visible = false;
         this.openSprite.visible = true;
-        this.openSprite.width = 0;
-        this.openSprite.x = this.openStartPosition;
+        this.openSprite.width = startWidth;
+        this.openSprite.x = openStartX;
 
-        // Step 4: Expand open sprite to 50% (left fixed at openStartPos, expands right)
-        const targetWidth = this.originalWidth * 0.5;
+        this.openShadow.visible = true;
+        this.openShadow.width = startWidth;
+        this.openShadow.x = openStartX + this.SHADOW_OFFSET_X;
+        // Keep shadow's original width
+        this.openShadow.y = this.SHADOW_OFFSET_Y;
+        // this.openShadow.y = this.openSprite.y + this.SHADOW_OFFSET_Y;
+
+        // Expand open door to target width (left edge fixed)
         await gsap.to(this.openSprite, {
             duration: 0.5,
             width: targetWidth,
             ease: "power2.out",
             onUpdate: () => {
-                this.openSprite.x = this.openStartPosition;
+                const w = this.openSprite.width;
+                this.openSprite.x = openStartX;
+                this.openShadow.width = w;
+                this.openShadow.x = openStartX + this.SHADOW_OFFSET_X;
             }
         });
     }
@@ -142,47 +184,58 @@ export class SafeDoor extends Container {
     async closeDoor() {
         if (!this.isOpen) return;
 
-        // Step 1: Shrink open sprite from 50% to 0 (left fixed, right shrinks)
         const fixedLeftEdge = this.openSprite.x;
+        const endShrinkWidth = this.originalWidth * this.openDoorStartWidthPercent;
 
+        // Shrink open door (left edge fixed)
         await gsap.to(this.openSprite, {
             duration: 0.5,
-            width: 0,
+            width: endShrinkWidth,
             ease: "power2.in",
             onUpdate: () => {
-                // Keep left edge fixed
+                const w = this.openSprite.width;
                 this.openSprite.x = fixedLeftEdge;
+                this.openShadow.width = w;
+                this.openShadow.x = fixedLeftEdge + this.SHADOW_OFFSET_X;
+            },
+            onComplete: () => {
+                this.openSprite.visible = false;
+                this.openShadow.visible = false;
             }
         });
 
-        // Step 2: Hide open sprite, prepare opening sprite
-        this.openSprite.visible = false;
+        // Prepare closed door at the same left edge
+        const closedStartWidth = this.originalWidth * this.closedDoorMinWidthPercent;
+        const closedStartX = fixedLeftEdge;
+
         this.closedSprite.visible = true;
-        this.closedSprite.width = 0;
-        this.closedSprite.x = fixedLeftEdge;
+        this.closedSprite.width = closedStartWidth;
+        this.closedSprite.x = closedStartX;
 
-        // Step 3: Expand opening sprite to full width (right fixed at originalWidth)
+        this.handleGroup.visible = true;
+        this.handleGroup.scale.x = closedStartWidth / this.originalWidth;
+        this.handleGroup.x = this.closedSprite.x + closedStartWidth / 2;
+        this.handleGroup.rotation = 0;
+
         const fixedRightEdge = this.originalWidth;
-
         await gsap.to(this.closedSprite, {
             duration: 0.5,
             width: this.originalWidth,
             ease: "power2.out",
             onUpdate: () => {
                 const w = this.closedSprite.width;
+                // Right edge fixed
                 this.closedSprite.x = fixedRightEdge - w;
+                this.handleGroup.x = this.closedSprite.x + w / 2;
+                this.handleGroup.scale.x = w / this.originalWidth;
+            },
+            onComplete: () => {
+                this.closedSprite.x = 0;
+                this.handleGroup.scale.x = 1;
+                this.handleGroup.x = this.originalWidth / 2;
+                this.handleGroup.rotation = 0;
             }
         });
-
-        // // Step 4: Hide opening sprite, show closed sprite
-        // this.closedSprite.width = this.originalWidth;
-        // this.closedSprite.x = 0;
-
-        // TODO: keep handle groped to closed door
-        // Restore handle
-        this.handleGroup.visible = true;
-        this.handleGroup.x = this.originalWidth / 2;
-        this.handleGroup.scale.x = 1;
 
         this.isOpen = false;
     }

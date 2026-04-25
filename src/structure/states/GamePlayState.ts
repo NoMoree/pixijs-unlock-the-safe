@@ -64,10 +64,7 @@ export class GamePlayState extends State {
         this.gameContainer.addChild(this.background);
 
         // Door
-        const closedTex = Assets.get("door-closed") as Texture;
-        const openTex = Assets.get("door-open") as Texture;
-        const handleTex = Assets.get("door-handle") as Texture;
-        this.door = new SafeDoor(closedTex, openTex, handleTex);
+        this.door = new SafeDoor();
         this.positionDoor();
         this.gameContainer.addChild(this.door);
         GAME.containers.door = this.door;

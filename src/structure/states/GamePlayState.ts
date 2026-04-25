@@ -130,6 +130,8 @@ export class GamePlayState extends State {
         this.rightZone.cursor = "pointer";
         this.rightZone.on("pointerdown", () => this.handleTurn("CW"));
         GAME.app.stage.addChild(this.rightZone);
+
+        window.addEventListener("keydown", this.keyboardHandler);
     }
 
     private getRefResolution() {
@@ -200,11 +202,23 @@ export class GamePlayState extends State {
         }
     }
 
+    private keyboardHandler = (e: KeyboardEvent) => {
+        if (e.code === "ArrowLeft" || e.code === "KeyA") {
+            e.preventDefault();
+            this.handleTurn("CCW");
+        } else if (e.code === "ArrowRight" || e.code === "KeyD") {
+            e.preventDefault();
+            this.handleTurn("CW");
+        }
+    };
+
     private cleanupInputAndTicker() {
         GAME.app.ticker.remove(this.updateTimer, this);
         window.removeEventListener("resize", this.onResize);
+        window.removeEventListener("keydown", this.keyboardHandler);
         if (this.leftZone) this.leftZone.destroy();
         if (this.rightZone) this.rightZone.destroy();
+        window.removeEventListener("resize", this.onResize);
     }
 
     removeEvents(): void {

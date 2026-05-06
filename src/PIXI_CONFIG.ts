@@ -1,12 +1,6 @@
 export class PIXI_CONFIG {
     public getConfig() {
         return {
-            // Reference resolution (must match background image original size)
-            referenceResolution: {
-                width: 2400,
-                height: 1108,
-            },
-
             password: {
                 maxTurns: 9,
                 sequences: 3,

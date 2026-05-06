@@ -27,14 +27,14 @@ export class GamePlayState extends State {
         }
     }
 
-    setupBlocks(): void {
-    }
+    setupBlocks(): void { }
 
     enterState(): void {
         super.enterState();
 
         if (GAME.containers.door) {
             this.door = GAME.containers.door;
+            this.updateGameContainerTransform();
             this.timerText.destroy();
             this.timerText = new TimerText();
             this.positionTimerText();
@@ -53,7 +53,6 @@ export class GamePlayState extends State {
 
     private createScene() {
         GAME.app.stage.removeChildren();
-        const ref = this.getRefResolution();
 
         this.gameContainer = new Container();
         GAME.app.stage.addChild(this.gameContainer);
@@ -61,22 +60,20 @@ export class GamePlayState extends State {
         // Background
         const bgTex = Assets.get("background") as Texture;
         this.background = new Sprite(bgTex);
-        this.background.width = ref.width;
-        this.background.height = ref.height;
+        const ref = this.getRefResolution();
         this.gameContainer.addChild(this.background);
 
         // Door
         this.door = new SafeDoor();
-        this.positionDoor();
+        this.door.setPosition(ref.width / 2, ref.height / 2);
         this.gameContainer.addChild(this.door);
         GAME.containers.door = this.door;
 
         this.timerText = new TimerText();
-        this.positionTimerText();
-
         GAME.app.stage.addChild(this.timerText);
 
         this.updateGameContainerTransform();
+        this.positionTimerText();
 
         this.setupInput();
         GAME.app.ticker.add(this.updateTimer, this);
@@ -85,28 +82,37 @@ export class GamePlayState extends State {
 
     private updateGameContainerTransform() {
         const ref = this.getRefResolution();
-        const { scale, x, y } = getGameScale(ref.width, ref.height);
+
+        const { scale, x, y } = getGameScale(ref.width, ref.height, {
+            maxOverflowRatio: 2,
+            targetScreenXRatio: 0.15,
+            doorRefX: this.door.x,
+        });
+
         this.gameContainer.scale.set(scale);
         this.gameContainer.x = x;
         this.gameContainer.y = y;
     }
 
-
-    private positionDoor() {
-        const ref = this.getRefResolution();
-        this.door.setPosition(ref.width / 2, ref.height / 2);
-    }
-
     private positionTimerText() {
         const timerCfg = GAME.config.getConfig().timer;
         const ref = this.getRefResolution();
-        const { scale, x, y } = getGameScale(ref.width, ref.height);
-        const bgLeft = x;
-        const bgTop = y;
-        const bgWidth = ref.width * scale;
-        const bgHeight = ref.height * scale;
-        this.timerText.x = bgLeft + bgWidth * timerCfg.posXPercent;
-        this.timerText.y = bgTop + bgHeight * timerCfg.posYPercent;
+        const container = this.gameContainer;
+        if (!container) return;
+
+        const scale = container.scale.x;
+        const containerLeft = container.x;
+        const containerTop = container.y;
+
+        const targetLocalX = ref.width * timerCfg.posXPercent;
+        const targetLocalY = ref.height * timerCfg.posYPercent;
+
+        // Convert to screen coordinates
+        const screenX = containerLeft + targetLocalX * scale;
+        const screenY = containerTop + targetLocalY * scale;
+
+        this.timerText.x = screenX;
+        this.timerText.y = screenY;
         this.timerText.anchor.set(timerCfg.anchorX, timerCfg.anchorY);
         this.timerText.style.fontSize = Math.max(5, timerCfg.fontSize * scale);
     }
@@ -135,7 +141,12 @@ export class GamePlayState extends State {
     }
 
     private getRefResolution() {
-        return GAME.config.getConfig().referenceResolution;
+        const tex = this.background.texture.source;
+
+        return {
+            width: tex.width,
+            height: tex.height
+        };
     }
 
     private async handleTurn(direction: "CW" | "CCW") {
@@ -218,11 +229,9 @@ export class GamePlayState extends State {
         window.removeEventListener("keydown", this.keyboardHandler);
         if (this.leftZone) this.leftZone.destroy();
         if (this.rightZone) this.rightZone.destroy();
-        window.removeEventListener("resize", this.onResize);
     }
 
-    removeEvents(): void {
-    }
+    removeEvents(): void { }
 
     exitState(): void {
         this.cleanupInputAndTicker();

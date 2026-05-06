@@ -21,6 +21,6 @@ export class TimerText extends Text {
         const secs = GAME_MODELS.timer.elapsedSeconds;
         const mins = Math.floor(secs / 60);
         const remainingSecs = Math.floor(secs % 60);
-        this.text = `${mins}:${remainingSecs.toString().padStart(2, "0")}`;
+        this.text = `${mins.toString().padStart(3, " ")}:${remainingSecs.toString().padStart(2, "0")}`;
     }
 }

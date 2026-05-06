@@ -53,7 +53,7 @@ export class PIXI_CONFIG {
             },
 
             timer: {
-                posXPercent: 0.2945,
+                posXPercent: 0.2845,
                 posYPercent: 0.4643,
                 anchorX: 0,
                 anchorY: 0.5,

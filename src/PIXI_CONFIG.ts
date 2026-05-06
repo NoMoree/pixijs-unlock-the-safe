@@ -33,7 +33,7 @@ export class PIXI_CONFIG {
                 handle: {
                     textureKey: "door-handle",
                     anchor: { x: 0.5, y: 0.5 },
-                    offset: { x: -35, y: 0 },
+                    offset: { x: -60, y: 0 },
                     scale: 1,
                 },
                 handleShadow: {

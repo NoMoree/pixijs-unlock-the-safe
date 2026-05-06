@@ -8,16 +8,21 @@ export class SafeDoor extends Container {
     private closedSprite: Sprite;
     private openSprite: Sprite;
     private openShadow: Sprite;
+
     private handleGroup: Container;
     private handleSprite: Sprite;
-    private handleShadow: Sprite;
+    private staticShadow: Sprite;
+    private rotatingShadow: Sprite;
+
     private isOpen = false;
-    private isAnimatingDoor = false;
+
     private originalWidth: number;
     private originalRightEdge: number;
+
     private currentScale: number = 1;
     private centerX: number = 0;
     private centerY: number = 0;
+
     private config: DoorConfig;
 
     constructor() {
@@ -29,6 +34,7 @@ export class SafeDoor extends Container {
         const openShadowTex = Assets.get(this.config.openShadow.textureKey) as Texture;
         const handleTex = Assets.get(this.config.handle.textureKey) as Texture;
         const handleShadowTex = Assets.get(this.config.handleShadow.textureKey) as Texture;
+        const rotatingShadowTex = Assets.get(this.config.handleShadow.textureKey) as Texture;
 
         this.closedSprite = new Sprite(closedTex);
         this.closedSprite.anchor.set(this.config.closed.anchor.x, this.config.closed.anchor.y);
@@ -39,6 +45,7 @@ export class SafeDoor extends Container {
         this.openShadow.anchor.set(this.config.openShadow.anchor.x, this.config.openShadow.anchor.y);
         this.openShadow.position.set(this.config.openShadow.offset.x, this.config.openShadow.offset.y);
         this.openShadow.alpha = this.config.openShadow.alpha;
+
         this.openShadow.visible = false;
         this.addChild(this.openShadow);
 
@@ -50,53 +57,80 @@ export class SafeDoor extends Container {
 
         this.handleGroup = new Container();
         this.handleSprite = new Sprite(handleTex);
-        this.handleSprite.anchor.set(0.5, 0.5);
+        this.handleSprite.anchor.set(0.5);
         this.handleSprite.position.set(0, 0);
-        this.handleSprite.scale.set(this.config.handle.scale, this.config.handle.scale);
+        this.handleSprite.scale.set(this.config.handle.scale);
 
-        this.handleShadow = new Sprite(handleShadowTex);
-        this.handleShadow.anchor.set(0.5, 0.5);
-        this.handleShadow.alpha = this.config.handleShadow.alpha;
-        this.handleShadow.scale.set(this.config.handleShadow.scale, this.config.handleShadow.scale);
-        this.addChild(this.handleShadow);
+        // Two shadow representations:
+        // - rotatingShadow: used when door is closed and handle rotates
+        // - staticShadow: used during door animation to avoid transform issues
+        this.rotatingShadow = new Sprite(rotatingShadowTex);
+        this.staticShadow = new Sprite(handleShadowTex);
+        this.resetHandleShadow();
+
+        this.closedSprite.addChild(this.rotatingShadow);
+        this.handleGroup.addChild(this.staticShadow);
         this.handleGroup.addChild(this.handleSprite);
-        this.addChild(this.handleGroup);
+        this.closedSprite.addChild(this.handleGroup);
 
         this.originalWidth = this.closedSprite.width;
         this.originalRightEdge = this.closedSprite.x + this.originalWidth;
         this.updateHandlePosition();
     }
 
+    private updateShadowMode() {
+        const isClosed = !this.isOpen;
+
+        this.rotatingShadow.visible = isClosed;
+        this.staticShadow.visible = !isClosed;
+    }
+
+    private resetHandleShadow() {
+        this.handleGroup.rotation = 0;
+
+        this.rotatingShadow.rotation = 0;
+        this.rotatingShadow.anchor.set(0.5);
+        this.rotatingShadow.scale.set(this.config.handleShadow.scale);
+        this.rotatingShadow.rotation = 0;
+        this.rotatingShadow.alpha = this.config.handleShadow.alpha;
+
+        this.staticShadow.scale.set(this.config.handleShadow.scale);
+        this.staticShadow.anchor.set(0.5);
+
+        this.updateShadowMode();
+    }
+
     private updateHandlePosition() {
         const w = this.closedSprite.width;
         const doorCenterX = this.closedSprite.x + w / 2;
-        const handleOffsetX = this.config.handle.offset?.x ?? 0;
-        const handleOffsetY = this.config.handle.offset?.y ?? 0;
-        this.handleGroup.x = doorCenterX + handleOffsetX;
-        this.handleGroup.y = handleOffsetY;
+
+        this.handleGroup.x = doorCenterX + (this.config.handle.offset?.x ?? 0);
+        this.handleGroup.y = this.config.handle.offset?.y ?? 0;
+
         this.handleGroup.scale.x = w / this.originalWidth;
         this.handleGroup.scale.y = 1;
-        this.updateShadowFollow();
+        this.staticShadow.x = this.handleGroup.x + this.config.handleShadow.offset.x;
+        this.staticShadow.y = this.handleGroup.y + this.config.handleShadow.offset.y;
+
+        this.rotatingShadow.x = this.handleGroup.x + this.config.handleShadow.offset.x;
+        this.rotatingShadow.y = this.handleGroup.y + this.config.handleShadow.offset.y;
     }
 
-    private updateShadowFollow() {
-        const shadowOffsetX = this.config.handleShadow.offset.x;
-        const shadowOffsetY = this.config.handleShadow.offset.y;
-        this.handleShadow.x = this.handleGroup.x + shadowOffsetX;
-        this.handleShadow.y = this.handleGroup.y + shadowOffsetY;
-        if (this.isAnimatingDoor) {
-            this.handleShadow.scale.x = this.handleGroup.scale.x * (this.config.handleShadow.scale ?? 1);
-            this.handleShadow.scale.y = this.config.handleShadow.scale ?? 1;
-            this.handleShadow.rotation = 0;
-        }
-        else {
-            this.handleShadow.rotation = this.handleGroup.rotation;
-        }
+    private syncShadow() {
+        const baseX = this.handleGroup.x;
+        const baseY = this.handleGroup.y;
+
+        const offsetX = this.config.handleShadow.offset.x;
+        const offsetY = this.config.handleShadow.offset.y;
+
+        this.rotatingShadow.x = baseX + offsetX;
+        this.rotatingShadow.y = baseY + offsetY;
+        this.rotatingShadow.rotation = this.handleGroup.rotation;
     }
 
     public setScale(scale: number) {
         this.currentScale = scale;
-        this.scale.set(scale, scale);
+        this.scale.set(scale);
     }
 
     public setPosition(centerX: number, centerY: number) {
@@ -109,20 +143,24 @@ export class SafeDoor extends Container {
 
     public updatePosition() {
         if (this.centerX && this.centerY) {
-            this.x = this.centerX - (this.originalWidth * this.currentScale) / 2;
+            const w = this.originalWidth * this.currentScale;
+            this.x = this.centerX - w / 2;
             this.y = this.centerY;
         }
     }
 
     async turnCW() { await this.rotateHandle(this.config.handleSpinDegrees); }
+
     async turnCCW() { await this.rotateHandle(-this.config.handleSpinDegrees); }
 
-    private async rotateHandle(degrees: number) {
-        await gsap.to(this.handleGroup, {
+    private rotateHandle(degrees: number) {
+        const rad = degrees * Math.PI / 180;
+
+        return gsap.to(this.handleGroup, {
             duration: this.config.handleSpinDuration,
-            rotation: `+=${degrees * Math.PI / 180}`,
+            rotation: `+=${rad}`,
             ease: "power2.out",
-            onUpdate: () => this.updateShadowFollow()
+            onUpdate: () => this.syncShadow()
         });
     }
 
@@ -133,21 +171,20 @@ export class SafeDoor extends Container {
             rotation: `+=${2 * Math.PI}`,
             repeat: this.config.furiousSpinRepeats,
             ease: "none",
-            onUpdate: () => this.updateShadowFollow()
+            onUpdate: () => this.syncShadow()
         }).to(this.handleGroup, {
             duration: 0.3,
             rotation: 0,
             ease: "back.out(2)",
-            onUpdate: () => this.updateShadowFollow()
+            onUpdate: () => this.syncShadow()
         });
         await tl;
     }
 
-    private resetHandleRotation() {
+    private resetHandle() {
         this.handleGroup.rotation = 0;
-        this.updateShadowFollow();
+        this.syncShadow();
     }
-
     private getDuration(type: "openingOpen" | "openingClosed" | "closingOpen" | "closingClosed", defaultDur: number = 0.5): number {
         const globalAll = GAME.config.getConfig().gameSettings.doorAnimation?.durationAll;
         if (globalAll !== null && globalAll !== undefined) return globalAll;
@@ -164,9 +201,10 @@ export class SafeDoor extends Container {
 
     async openDoor() {
         if (this.isOpen) return;
+
+        this.resetHandleShadow();
         this.isOpen = true;
-        this.isAnimatingDoor = true;
-        this.resetHandleRotation();
+        this.resetHandle();
 
         // Fixed right edge of the closed door
         const fixedRightEdge = this.originalRightEdge;
@@ -180,15 +218,11 @@ export class SafeDoor extends Container {
             onUpdate: () => {
                 const w = this.closedSprite.width;
                 this.closedSprite.x = fixedRightEdge - w;
-                this.updateHandlePosition();
             },
             onComplete: () => {
                 this.closedSprite.width = minClosedWidth;
                 this.closedSprite.x = fixedRightEdge - minClosedWidth;
-                this.updateHandlePosition();
                 this.closedSprite.visible = false;
-                this.handleGroup.visible = false;
-                this.handleShadow.visible = false;
             }
         });
 
@@ -199,15 +233,16 @@ export class SafeDoor extends Container {
         const openStartY = this.config.open.offset?.y ?? 0;
         const expandDur = this.getDuration("openingOpen");
 
-        this.openSprite.visible = true;
         this.openSprite.width = startWidth;
         this.openSprite.x = openStartX;
         this.openSprite.y = openStartY;
 
-        this.openShadow.visible = true;
         this.openShadow.width = startWidth;
         this.openShadow.x = openStartX + (this.config.openShadow.offset?.x ?? 0);
         this.openShadow.y = openStartY + (this.config.openShadow.offset?.y ?? 0);
+
+        this.openSprite.visible = true;
+        this.openShadow.visible = true;
 
         // Expand open door to target width (left edge fixed)
         await gsap.to(this.openSprite, {
@@ -220,12 +255,10 @@ export class SafeDoor extends Container {
                 this.openShadow.x = openStartX + (this.config.openShadow.offset?.x ?? 0);
             }
         });
-        this.isAnimatingDoor = false;
     }
 
     async closeDoor() {
         if (!this.isOpen) return;
-        this.isAnimatingDoor = true;
 
         const fixedLeftEdge = this.openSprite.x;
         const endShrinkWidth = this.originalWidth * this.config.openDoorStartWidthPercent;
@@ -247,21 +280,11 @@ export class SafeDoor extends Container {
             }
         });
 
-        // Prepare closed door at the same left edge
-        const closedStartWidth = this.originalWidth * this.config.closedDoorMinWidthPercent;
-        const closedStartX = fixedLeftEdge;
-        this.closedSprite.visible = true;
-        this.closedSprite.width = closedStartWidth;
-        this.closedSprite.x = closedStartX;
-        this.closedSprite.y = this.config.closed.offset?.y ?? 0;
-
-        this.handleGroup.visible = true;
-        this.handleShadow.visible = true;
-        this.updateHandlePosition();
-
         const fixedRightEdge = this.originalRightEdge;
         const expandDur = this.getDuration("closingClosed");
 
+        this.closedSprite.visible = true;
+        this.handleGroup.visible = true;
         await gsap.to(this.closedSprite, {
             duration: expandDur,
             width: this.originalWidth,
@@ -269,18 +292,14 @@ export class SafeDoor extends Container {
             onUpdate: () => {
                 const w = this.closedSprite.width;
                 this.closedSprite.x = fixedRightEdge - w;
-                this.updateHandlePosition();
             },
             onComplete: () => {
                 this.closedSprite.y = this.config.closed.offset?.y ?? 0;
-                this.updateHandlePosition();
-                this.handleGroup.rotation = 0;
-                this.handleShadow.rotation = 0;
             }
         });
 
         this.isOpen = false;
-        this.isAnimatingDoor = false;
+        this.resetHandleShadow();
     }
 
     public getOriginalWidth(): number {

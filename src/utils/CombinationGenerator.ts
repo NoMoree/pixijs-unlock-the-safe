@@ -7,7 +7,7 @@ export class CombinationGenerator {
         const sequences = pairCount ?? config.sequences;
         const max = maxSteps ?? config.maxTurns;
         const combo: CombinationPair[] = [];
-        let isCW = false;
+        let isCW = Math.random() < 0.5;
         for (let i = 0; i < sequences; i++) {
             const steps = Math.floor(Math.random() * max) + 1;
             const direction: Direction = isCW ? "CW" : "CCW";

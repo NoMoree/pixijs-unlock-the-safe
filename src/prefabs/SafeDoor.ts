@@ -128,11 +128,6 @@ export class SafeDoor extends Container {
         this.rotatingShadow.rotation = this.handleGroup.rotation;
     }
 
-    public setScale(scale: number) {
-        this.currentScale = scale;
-        this.scale.set(scale);
-    }
-
     public setPosition(centerX: number, centerY: number) {
         this.centerX = centerX;
         this.centerY = centerY;

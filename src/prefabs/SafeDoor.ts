@@ -1,4 +1,4 @@
-import { Container, Sprite, Texture, Assets } from "pixi.js";
+import { Container, Sprite, Assets } from "pixi.js";
 import gsap from "gsap";
 import { GAME } from "../GAME";
 
@@ -24,48 +24,53 @@ export class SafeDoor extends Container {
     private centerY: number = 0;
 
     private config: DoorConfig;
+    private turnHandler: ((direction: "CW" | "CCW") => void) | null = null;
 
     constructor() {
         super();
         this.config = GAME.config.getConfig().door;
 
-        const closedTex = Assets.get(this.config.closed.textureKey) as Texture;
-        const openTex = Assets.get(this.config.open.textureKey) as Texture;
-        const openShadowTex = Assets.get(this.config.openShadow.textureKey) as Texture;
-        const handleTex = Assets.get(this.config.handle.textureKey) as Texture;
-        const handleShadowTex = Assets.get(this.config.handleShadow.textureKey) as Texture;
-        const rotatingShadowTex = Assets.get(this.config.handleShadow.textureKey) as Texture;
+        const createSprite = (key: string, anchorX: number, anchorY: number, posX: number, posY: number): Sprite => {
+            const tex = Assets.get(key);
+            const sprite = Sprite.from(tex);
+            sprite.anchor.set(anchorX, anchorY);
+            sprite.position.set(posX, posY);
+            return sprite;
+        };
 
-        this.closedSprite = new Sprite(closedTex);
-        this.closedSprite.anchor.set(this.config.closed.anchor.x, this.config.closed.anchor.y);
-        this.closedSprite.position.set(this.config.closed.offset.x, this.config.closed.offset.y);
+        this.closedSprite = createSprite(
+            this.config.closed.textureKey,
+            this.config.closed.anchor.x, this.config.closed.anchor.y,
+            this.config.closed.offset.x, this.config.closed.offset.y
+        );
         this.addChild(this.closedSprite);
 
-        this.openShadow = new Sprite(openShadowTex);
-        this.openShadow.anchor.set(this.config.openShadow.anchor.x, this.config.openShadow.anchor.y);
-        this.openShadow.position.set(this.config.openShadow.offset.x, this.config.openShadow.offset.y);
+        this.openShadow = createSprite(
+            this.config.openShadow.textureKey,
+            this.config.openShadow.anchor.x, this.config.openShadow.anchor.y,
+            this.config.openShadow.offset.x, this.config.openShadow.offset.y
+        );
         this.openShadow.alpha = this.config.openShadow.alpha;
-
         this.openShadow.visible = false;
         this.addChild(this.openShadow);
 
-        this.openSprite = new Sprite(openTex);
-        this.openSprite.anchor.set(this.config.open.anchor.x, this.config.open.anchor.y);
-        this.openSprite.position.set(this.config.open.offset.x, this.config.open.offset.y);
+        this.openSprite = createSprite(
+            this.config.open.textureKey,
+            this.config.open.anchor.x, this.config.open.anchor.y,
+            this.config.open.offset.x, this.config.open.offset.y
+        );
         this.openSprite.visible = false;
         this.addChild(this.openSprite);
 
         this.handleGroup = new Container();
-        this.handleSprite = new Sprite(handleTex);
-        this.handleSprite.anchor.set(0.5);
-        this.handleSprite.position.set(0, 0);
+        this.handleSprite = createSprite(this.config.handle.textureKey, 0.5, 0.5, 0, 0);
         this.handleSprite.scale.set(this.config.handle.scale);
 
         // Two shadow representations:
         // - rotatingShadow: used when door is closed and handle rotates
         // - staticShadow: used during door animation to avoid transform issues
-        this.rotatingShadow = new Sprite(rotatingShadowTex);
-        this.staticShadow = new Sprite(handleShadowTex);
+        this.rotatingShadow = new Sprite(Assets.get(this.config.handleShadow.textureKey));
+        this.staticShadow = new Sprite(Assets.get(this.config.handleShadow.textureKey));
         this.resetHandleShadow();
 
         this.closedSprite.addChild(this.rotatingShadow);
@@ -73,9 +78,25 @@ export class SafeDoor extends Container {
         this.handleGroup.addChild(this.handleSprite);
         this.closedSprite.addChild(this.handleGroup);
 
+        this.handleGroup.eventMode = "static";
+        this.handleGroup.cursor = "pointer";
+        this.handleGroup.on("pointerdown", this.onHandleClick.bind(this));
+
         this.originalWidth = this.closedSprite.width;
         this.originalRightEdge = this.closedSprite.x + this.originalWidth;
         this.updateHandlePosition();
+    }
+
+    public setTurnHandler(handler: (direction: "CW" | "CCW") => void) {
+        this.turnHandler = handler;
+    }
+
+    private onHandleClick(event: any) {
+        if (this.isOpen || !this.turnHandler) return;
+        const globalPos = event.global;
+        const doorCenterGlobal = this.toGlobal({ x: this.originalWidth / 2, y: 0 });
+        const direction = globalPos.x < doorCenterGlobal.x ? "CCW" : "CW";
+        this.turnHandler(direction);
     }
 
     private updateShadowMode() {
@@ -180,6 +201,7 @@ export class SafeDoor extends Container {
         this.handleGroup.rotation = 0;
         this.syncShadow();
     }
+
     private getDuration(type: "openingOpen" | "openingClosed" | "closingOpen" | "closingClosed", defaultDur: number = 0.5): number {
         const globalAll = GAME.config.getConfig().gameSettings.doorAnimation?.durationAll;
         if (globalAll !== null && globalAll !== undefined) return globalAll;

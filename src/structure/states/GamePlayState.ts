@@ -1,4 +1,4 @@
-import { Graphics, Sprite, Assets, Texture, Container } from "pixi.js";
+import { Sprite, Assets, Texture, Container } from "pixi.js";
 import { State } from "../State";
 import { GAME } from "../../GAME";
 import { SafeDoor } from "../../prefabs/SafeDoor";
@@ -11,8 +11,6 @@ export class GamePlayState extends State {
     private gameContainer!: Container;
     private door!: SafeDoor;
     private timerText!: TimerText;
-    private leftZone!: Graphics;
-    private rightZone!: Graphics;
     private background!: Sprite;
 
     setupEvents(): void {
@@ -66,6 +64,7 @@ export class GamePlayState extends State {
         // Door
         this.door = new SafeDoor();
         this.door.setPosition(ref.width / 2, ref.height / 2);
+        this.door.setTurnHandler((direction) => this.handleTurn(direction));
         this.gameContainer.addChild(this.door);
         GAME.containers.door = this.door;
 
@@ -118,25 +117,6 @@ export class GamePlayState extends State {
     }
 
     private setupInput() {
-        if (this.leftZone) this.leftZone.destroy();
-        if (this.rightZone) this.rightZone.destroy();
-
-        this.leftZone = new Graphics()
-            .rect(0, 0, window.innerWidth / 2, window.innerHeight)
-            .fill(0x000000, 0);
-        this.leftZone.eventMode = "static";
-        this.leftZone.cursor = "pointer";
-        this.leftZone.on("pointerdown", () => this.handleTurn("CCW"));
-        GAME.app.stage.addChild(this.leftZone);
-
-        this.rightZone = new Graphics()
-            .rect(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight)
-            .fill(0x000000, 0);
-        this.rightZone.eventMode = "static";
-        this.rightZone.cursor = "pointer";
-        this.rightZone.on("pointerdown", () => this.handleTurn("CW"));
-        GAME.app.stage.addChild(this.rightZone);
-
         window.addEventListener("keydown", this.keyboardHandler);
     }
 
@@ -197,20 +177,6 @@ export class GamePlayState extends State {
     private onResize() {
         this.updateGameContainerTransform();
         this.positionTimerText();
-        this.resizeInputZones();
-    }
-
-    private resizeInputZones() {
-        if (this.leftZone) {
-            this.leftZone.clear()
-                .rect(0, 0, window.innerWidth / 2, window.innerHeight)
-                .fill(0x000000, 0);
-        }
-        if (this.rightZone) {
-            this.rightZone.clear()
-                .rect(window.innerWidth / 2, 0, window.innerWidth / 2, window.innerHeight)
-                .fill(0x000000, 0);
-        }
     }
 
     private keyboardHandler = (e: KeyboardEvent) => {
@@ -227,8 +193,6 @@ export class GamePlayState extends State {
         GAME.app.ticker.remove(this.updateTimer, this);
         window.removeEventListener("resize", this.onResize);
         window.removeEventListener("keydown", this.keyboardHandler);
-        if (this.leftZone) this.leftZone.destroy();
-        if (this.rightZone) this.rightZone.destroy();
     }
 
     removeEvents(): void { }

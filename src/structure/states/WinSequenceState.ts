@@ -3,32 +3,33 @@ import { GAME } from "../../GAME";
 import { GameState } from "./StateDefinitions";
 import { OpenDoorBlock } from "../blocks/success/OpenDoorBlock";
 import { ResetGameBlock } from "../blocks/success/ResetGameBlock";
-import { AddTreasureShineEffectBlock } from "../blocks/success/AddTreasureShineEffectBlock";
+import { TreasureShineBlock, ShineConfig } from "../blocks/success/TreasureShineBlock";
 
 export class WinSequenceState extends State {
     setupEvents(): void {
         console.log("WinSequenceState - playing win sequence");
     }
 
-    modelChanges(): void {
-    }
+    modelChanges(): void { }
 
     setupBlocks(): void {
         const door = GAME.containers.door;
         if (!door) {
-            console.error("Door missing  cannot run win sequence");
+            console.error("Door missing cannot run win sequence");
             this.exitState();
             return;
         }
+
+        const shineConfig: ShineConfig = GAME.config.getConfig().shine;
+
         this.blocks = [
             new OpenDoorBlock("Open door", door),
-            new AddTreasureShineEffectBlock("Add treasure shine effect"),
+            new TreasureShineBlock("Add treasure shine effect", door, shineConfig),
             new ResetGameBlock("Reset game", door),
         ];
     }
 
-    removeEvents(): void {
-    }
+    removeEvents(): void { }
 
     exitState(): void {
         GAME.states[GameState.GAME_PLAY].enterState();

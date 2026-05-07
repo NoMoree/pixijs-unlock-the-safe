@@ -1,14 +1,25 @@
 import { Block } from "../../Blocks";
 import { Assets, Sprite, Container } from "pixi.js";
 import gsap from "gsap";
-import { GAME } from "../../../GAME";
+import { SafeDoor } from "../../../prefabs/SafeDoor";
 
-export class AddTreasureShineEffectBlock extends Block {
+export type ShineConfig = {
+    count: number;
+    radius: number;
+    minDuration: number;
+    maxDuration: number;
+};
+
+export class TreasureShineBlock extends Block {
     private container: Container | null = null;
     private sprites: Sprite[] = [];
+    private door: SafeDoor;
+    private shineConfig: ShineConfig;
 
-    constructor(name: string) {
+    constructor(name: string, door: SafeDoor, shineConfig: ShineConfig) {
         super(name);
+        this.door = door;
+        this.shineConfig = shineConfig;
     }
 
     async start() {
@@ -20,20 +31,19 @@ export class AddTreasureShineEffectBlock extends Block {
             return;
         }
 
-        const door = GAME.containers.door;
-        if (!door) {
+        if (!this.door) {
             this.end();
             return;
         }
 
-        const config = GAME.config.getConfig().shine;
-        const treasureX = door.getOriginalWidth() / 2;
+        const config = this.shineConfig;
+        const treasureX = this.door.getOriginalWidth() / 2;
         const treasureY = 0;
 
         this.container = new Container();
         this.container.x = treasureX;
         this.container.y = treasureY;
-        door.addChild(this.container);
+        this.door.addChild(this.container);
 
         for (let i = 0; i < config.count; i++) {
             const shine = new Sprite(shineTex);
@@ -60,7 +70,6 @@ export class AddTreasureShineEffectBlock extends Block {
         }
 
         await new Promise((resolve) => gsap.delayedCall(5, resolve));
-
         this.cleanup();
         this.end();
     }

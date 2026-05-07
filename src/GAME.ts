@@ -1,6 +1,5 @@
 import { Application } from "pixi.js";
 import { Models } from "./game/models/Models";
-import { XContainer } from "./pixi/XContainer";
 import { GameState } from "./structure/states/StateDefinitions";
 import { SetupState } from "./structure/states/SetupState";
 import { GamePlayState } from "./structure/states/GamePlayState";
@@ -28,13 +27,10 @@ type GAME_Type = {
     events: {
         blockComplete: CustomEvent<void>;
         redraw: CustomEvent<void>;
-        enableSound: CustomEvent<boolean>;
     };
     containers: {
-        mainGameContainer: XContainer | undefined;
         door: SafeDoor | undefined;
     };
-    sound: any;
     app: Application;
     config: PIXI_CONFIG;
 };
@@ -50,13 +46,10 @@ export const GAME: GAME_Type = {
     events: {
         blockComplete: new CustomEvent<void>("block-complete"),
         redraw: new CustomEvent<void>("redraw", true),
-        enableSound: new CustomEvent<boolean>("sound-enabled", true),
     },
     containers: {
-        mainGameContainer: undefined,
         door: undefined,
     },
-    sound: undefined,
     app: new Application(),
     config: new PIXI_CONFIG(),
 };
